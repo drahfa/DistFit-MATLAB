@@ -20,11 +20,25 @@ m.rnd = @(n,th) gpd_rnd(n, th(1), th(2));
         end
         if nargin < 2 || isempty(th0), th0 = m.start(x); end
         th0 = enforce_bounds(th0);
-        try %#ok<TRYNC>
+
+        warnState = warning('query','stats:gpfit:ConvergenceProblem');
+        warning('error','stats:gpfit:ConvergenceProblem');
+        cleanupObj = onCleanup(@() warning(warnState.state,'stats:gpfit:ConvergenceProblem'));
+        try
             [khat, sigmahat] = gpfit(x);
             th = enforce_bounds([sigmahat, khat]);
+            clear cleanupObj; % restore warning state before returning
             return;
+        catch ME
+            allowFallback = any(strcmp(ME.identifier, { ...
+                'stats:gpfit:ConvergenceProblem', ...
+                'MATLAB:UndefinedFunction'}));
+            if ~allowFallback
+                rethrow(ME);
+            end
         end
+        clear cleanupObj;
+
         phi0 = theta_to_phi(th0);
         opts = optimset('display','off','tolx',1e-8,'tolfun',1e-8,'maxiter',4000,'maxfunevals',8000);
         [phi, fval, exitflag] = fminsearch(@(ph) nll_phi(ph, x), phi0, opts);
@@ -150,4 +164,3 @@ end
 function val = clamp(x, lo, hi)
 val = min(max(x, lo), hi);
 end
-
