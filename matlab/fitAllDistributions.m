@@ -18,7 +18,7 @@ models = dists.registry();
 if all(abs(x - round(x)) < 1e-12)
     models = models(strcmp({models.type}, 'disc'));
 else
-    models = models(strcmp({models.type}, 'cont') | strcmp({models.type}, 'disc'));
+    models = models(strcmp({models.type}, 'cont'));
 end
 res = struct('name',{},'theta',{},'KS',{},'AD',{},'CS',{},'KSp',{},'ADp',{},'loglik',{},'AIC',{},'BIC',{});
 for k = 1:numel(models)
